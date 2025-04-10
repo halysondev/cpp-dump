@@ -22,7 +22,7 @@ namespace cpp_dump {
 
 namespace _detail {
 
-namespace _tuple {
+namespace _export_tuple {
 
 template <std::size_t i, typename T>
 inline auto get(const T &tuple, int) -> decltype(tuple.template get<i>()) {
@@ -34,8 +34,6 @@ inline auto get(const T &tuple, long) -> decltype(get<i>(tuple)) {
   return get<i>(tuple);
 }
 
-}  // namespace _tuple
-
 template <std::size_t i, std::size_t size, typename T>
 inline auto _export_tuple_in_one_line(
     const T &tuple,
@@ -44,8 +42,9 @@ inline auto _export_tuple_in_one_line(
     std::size_t next_depth,
     const export_command &command
 ) -> std::enable_if_t<is_tuple<T>, std::string> {
-  std::string output =
-      export_var(_tuple::get<i>(tuple, 0), indent, last_line_length, next_depth, true, command);
+  std::string output = export_var(
+      _export_tuple::get<i>(tuple, 0), indent, last_line_length, next_depth, true, command
+  );
   if (has_newline(output)) {
     return "\n";
   }
@@ -64,8 +63,9 @@ template <std::size_t i, std::size_t size, typename T>
 inline auto _export_tuple_in_lines(
     const T &tuple, const std::string &indent, std::size_t next_depth, const export_command &command
 ) -> std::enable_if_t<is_tuple<T>, std::string> {
-  std::string output =
-      export_var(_tuple::get<i>(tuple, 0), indent, get_length(indent), next_depth, false, command);
+  std::string output = export_var(
+      _export_tuple::get<i>(tuple, 0), indent, get_length(indent), next_depth, false, command
+  );
 
   if constexpr (i < size - 1) {
     return output + es::op(",\n") + indent
@@ -93,6 +93,7 @@ inline auto export_tuple(
       return es::bracket("( ", current_depth) + es::op("...") + es::bracket(" )", current_depth);
     }
 
+    // Try exporting on one line.
     std::size_t next_depth = current_depth + 1;
     std::string output = es::bracket("( ", current_depth)
                          + _export_tuple_in_one_line<0, tuple_size>(
@@ -107,12 +108,17 @@ inline auto export_tuple(
       return "\n";
     }
 
+    // Try exporting on multiple lines.
     std::string new_indent = indent + "  ";
     return es::bracket("(\n", current_depth) + new_indent
            + _export_tuple_in_lines<0, tuple_size>(tuple, new_indent, next_depth, command) + "\n"
            + indent + es::bracket(")", current_depth);
   }
 }
+
+}  // namespace _export_tuple
+
+using _export_tuple::export_tuple;
 
 }  // namespace _detail
 

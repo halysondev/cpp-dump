@@ -27,6 +27,8 @@ namespace cpp_dump {
 
 namespace _detail {
 
+namespace _export_other {
+
 template <typename T>
 inline auto export_other(
     const T &optional,
@@ -67,13 +69,9 @@ inline std::string export_other(
   return export_var(ref.get(), indent, last_line_length, current_depth, fail_on_newline, command);
 }
 
-namespace es {
-
-inline std::string _bitset(std::string_view s) {
+inline std::string _es_bitset(std::string_view s) {
   return options::es_style == types::es_style_t::original ? es::identifier(s) : es::number(s);
 }
-
-}  // namespace es
 
 template <std::size_t N>
 inline std::string
@@ -81,27 +79,23 @@ export_other(const std::bitset<N> &bitset, const std::string &, std::size_t, std
   constexpr unsigned int chunk = 4;
 
   std::string bitset_str = bitset.to_string();
-  std::string spaced_output;
-  spaced_output.reserve(3 + N + (N - 1) / chunk);
-  spaced_output.append("0b ");
+  std::string output;
+  output.reserve(3 + N + (N - 1) / chunk);
+  output.append("0b ");
 
   std::size_t pos = bitset_str.length() % chunk;
-  if (pos > 0) spaced_output.append(bitset_str, 0, pos);
+  if (pos > 0) output.append(bitset_str, 0, pos);
   for (; pos < bitset_str.length(); pos += chunk) {
-    if (pos > 0) spaced_output.push_back(' ');
-    spaced_output.append(bitset_str, pos, chunk);
+    if (pos > 0) output.push_back(' ');
+    output.append(bitset_str, pos, chunk);
   }
-  return es::_bitset(spaced_output);
+  return _es_bitset(output);
 }
 
-namespace es {
-
-inline std::string _complex_complex(std::string_view s) {
+inline std::string _es_complex_complex(std::string_view s) {
   return options::es_style == types::es_style_t::original ? es::identifier(s)
                                                           : es::signed_number(s);
 }
-
-}  // namespace es
 
 template <typename T>
 inline std::string export_other(
@@ -123,7 +117,7 @@ inline std::string export_other(
   auto imag = std::imag(complex);
   auto imag_sign = imag >= 0 ? "+" : "-";
 
-  return es::_complex_complex(
+  return _es_complex_complex(
              to_str(std::real(complex)) + " " + imag_sign + " " + to_str(std::abs(imag)) + "i "
          )
          + es::bracket("( ", current_depth) + es::member("abs") + es::op("= ")
@@ -132,13 +126,9 @@ inline std::string export_other(
          + es::bracket(" )", current_depth);
 }
 
-namespace es {
-
-inline std::string _variant_bar(std::string_view s) {
+inline std::string _es_variant_bar(std::string_view s) {
   return options::es_style == types::es_style_t::original ? es::identifier(s) : es::op(s);
 }
-
-}  // namespace es
 
 template <typename... Args>
 inline std::string export_other(
@@ -151,7 +141,7 @@ inline std::string export_other(
 ) {
   return std::visit(
       [=, &indent, &command](const auto &value) -> std::string {
-        return es::_variant_bar("|")
+        return _es_variant_bar("|")
                + export_var(
                    value, indent, last_line_length + 1, current_depth, fail_on_newline, command
                );
@@ -184,6 +174,10 @@ inline auto export_other(
       value, indent, last_line_length, current_depth, fail_on_newline, command
   );
 }
+
+}  // namespace _export_other
+
+using _export_other::export_other;
 
 }  // namespace _detail
 
