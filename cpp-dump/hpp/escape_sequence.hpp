@@ -85,16 +85,19 @@ inline std::string type_name(std::string_view s) {
   auto begin = s.begin();
   decltype(begin) end;
   while ((end = std::find_if(begin, s.end(), is_operator)) != s.end()) {
-    output += es::identifier({&*begin, static_cast<std::size_t>(end - begin)});
+    auto len1 = end - begin;
+    output += es::identifier({&*begin, static_cast<std::size_t>(len1 >= 0 ? len1 : 0)});
     begin = end;
     end = std::find_if_not(begin, s.end(), is_operator);
-    output += es::class_op({&*begin, static_cast<std::size_t>(end - begin)});
+    auto len2 = end - begin;
+    output += es::class_op({&*begin, static_cast<std::size_t>(len2 >= 0 ? len2 : 0)});
     if (end == s.end()) {
       return output;
     }
     begin = end;
   }
-  output += es::identifier({&*begin, static_cast<std::size_t>(s.end() - begin)});
+  auto len_final = s.end() - begin;
+  output += es::identifier({&*begin, static_cast<std::size_t>(len_final >= 0 ? len_final : 0)});
   return output;
 }
 
@@ -125,14 +128,19 @@ inline std::string enumerator(std::string_view s) {
 
   auto op_rend = std::find_if_not(op_rbegin, s.rend(), is_operator);
   if (op_rend == s.rend()) {
-    return es::op({&*s.begin(), static_cast<std::size_t>(op_end - s.begin())})
-           + es::member({&*op_end, static_cast<std::size_t>(s.end() - op_end)});
+    auto len_op = op_end - s.begin();
+    auto len_member = s.end() - op_end;
+    return es::op({&*s.begin(), static_cast<std::size_t>(len_op >= 0 ? len_op : 0)})
+           + es::member({&*op_end, static_cast<std::size_t>(len_member >= 0 ? len_member : 0)});
   }
   auto op_begin = op_rend.base();
 
-  return es::class_name({&*s.begin(), static_cast<std::size_t>(op_begin - s.begin())})
-         + es::op({&*op_begin, static_cast<std::size_t>(op_end - op_begin)})
-         + es::member({&*op_end, static_cast<std::size_t>(s.end() - op_end)});
+  auto len_class = op_begin - s.begin();
+  auto len_op2 = op_end - op_begin;
+  auto len_member2 = s.end() - op_end;
+  return es::class_name({&*s.begin(), static_cast<std::size_t>(len_class >= 0 ? len_class : 0)})
+         + es::op({&*op_begin, static_cast<std::size_t>(len_op2 >= 0 ? len_op2 : 0)})
+         + es::member({&*op_end, static_cast<std::size_t>(len_member2 >= 0 ? len_member2 : 0)});
 }
 
 inline std::string class_member(std::string_view s) {
@@ -151,16 +159,19 @@ inline std::string class_member(std::string_view s) {
   auto begin = s.begin();
   decltype(begin) end;
   while ((end = std::find_if(begin, s.end(), is_operator)) != s.end()) {
-    output += es::member({&*begin, static_cast<std::size_t>(end - begin)});
+    auto len_mem1 = end - begin;
+    output += es::member({&*begin, static_cast<std::size_t>(len_mem1 >= 0 ? len_mem1 : 0)});
     begin = end;
     end = std::find_if_not(begin, s.end(), is_operator);
-    output += es::member_op({&*begin, static_cast<std::size_t>(end - begin)});
+    auto len_mem2 = end - begin;
+    output += es::member_op({&*begin, static_cast<std::size_t>(len_mem2 >= 0 ? len_mem2 : 0)});
     if (end == s.end()) {
       return output;
     }
     begin = end;
   }
-  output += es::member({&*begin, static_cast<std::size_t>(s.end() - begin)});
+  auto len_mem_final = s.end() - begin;
+  output += es::member({&*begin, static_cast<std::size_t>(len_mem_final >= 0 ? len_mem_final : 0)});
   return output;
 }
 
@@ -181,17 +192,20 @@ inline std::string signed_number(std::string_view s) {
   decltype(begin) end;
   while ((end = std::find_if(begin, s.end(), is_operator)) != s.end()) {
     if (begin != end) {
-      output += es::number({&*begin, static_cast<std::size_t>(end - begin)});
+      auto len_num1 = end - begin;
+      output += es::number({&*begin, static_cast<std::size_t>(len_num1 >= 0 ? len_num1 : 0)});
     }
     begin = end;
     end = std::find_if_not(begin, s.end(), is_operator);
-    output += es::number_op({&*begin, static_cast<std::size_t>(end - begin)});
+    auto len_num2 = end - begin;
+    output += es::number_op({&*begin, static_cast<std::size_t>(len_num2 >= 0 ? len_num2 : 0)});
     if (end == s.end()) {
       return output;
     }
     begin = end;
   }
-  output += es::number({&*begin, static_cast<std::size_t>(s.end() - begin)});
+  auto len_num_final = s.end() - begin;
+  output += es::number({&*begin, static_cast<std::size_t>(len_num_final >= 0 ? len_num_final : 0)});
   return output;
 }
 
@@ -207,7 +221,8 @@ inline std::string escaped_str(std::string_view s) {
   decltype(begin) end;
   while ((end = std::find_if(begin, s.end(), is_backslash)) != s.end()) {
     if (begin != end) {
-      output += es::character({&*begin, static_cast<std::size_t>(end - begin)});
+      auto len_char1 = end - begin;
+      output += es::character({&*begin, static_cast<std::size_t>(len_char1 >= 0 ? len_char1 : 0)});
     }
     begin = end;
 
@@ -222,13 +237,15 @@ inline std::string escaped_str(std::string_view s) {
       }
     }
 
-    output += es::escaped_char({&*begin, static_cast<std::size_t>(end - begin)});
+    auto len_escaped = end - begin;
+    output += es::escaped_char({&*begin, static_cast<std::size_t>(len_escaped >= 0 ? len_escaped : 0)});
     if (end == s.end()) {
       return output;
     }
     begin = end;
   }
-  output += es::character({&*begin, static_cast<std::size_t>(s.end() - begin)});
+  auto len_char_final = s.end() - begin;
+  output += es::character({&*begin, static_cast<std::size_t>(len_char_final >= 0 ? len_char_final : 0)});
   return output;
 }
 
