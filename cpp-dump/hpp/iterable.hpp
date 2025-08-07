@@ -13,34 +13,38 @@ namespace cpp_dump {
 
 namespace _detail {
 
+// Tag dispatching structures to avoid type conversion issues
+struct priority_tag_high {};
+struct priority_tag_low {};
+
 template <typename T>
-inline auto _iterable_begin(const T &t, int) -> decltype(begin(t)) {
+inline auto _iterable_begin(const T &t, priority_tag_high) -> decltype(begin(t)) {
   return begin(t);
 }
 
 template <typename T>
-inline auto _iterable_begin(const T &t, long) -> decltype(std::begin(t)) {
+inline auto _iterable_begin(const T &t, priority_tag_low) -> decltype(std::begin(t)) {
   return std::begin(t);
 }
 
 template <typename T>
-inline auto iterable_begin(const T &t) -> decltype(_iterable_begin(t, 0)) {
-  return _iterable_begin(t, 0);
+inline auto iterable_begin(const T &t) -> decltype(_iterable_begin(t, priority_tag_high{})) {
+  return _iterable_begin(t, priority_tag_high{});
 }
 
 template <typename T>
-inline auto _iterable_end(const T &t, int) -> decltype(end(t)) {
+inline auto _iterable_end(const T &t, priority_tag_high) -> decltype(end(t)) {
   return end(t);
 }
 
 template <typename T>
-inline auto _iterable_end(const T &t, long) -> decltype(std::end(t)) {
+inline auto _iterable_end(const T &t, priority_tag_low) -> decltype(std::end(t)) {
   return std::end(t);
 }
 
 template <typename T>
-inline auto iterable_end(const T &t) -> decltype(_iterable_end(t, 0)) {
-  return _iterable_end(t, 0);
+inline auto iterable_end(const T &t) -> decltype(_iterable_end(t, priority_tag_high{})) {
+  return _iterable_end(t, priority_tag_high{});
 }
 
 template <typename T>
@@ -49,17 +53,17 @@ inline bool is_empty_iterable(const T &t) {
 }
 
 template <typename T>
-inline auto _iterable_size(const T &t, int, int) -> decltype(size(t)) {
+inline auto _iterable_size(const T &t, priority_tag_high, priority_tag_high) -> decltype(size(t)) {
+  return size(t);
+}
+
+template <typename T>
+inline auto _iterable_size(const T &t, priority_tag_high, priority_tag_low) -> decltype(std::size(t)) {
   return std::size(t);
 }
 
 template <typename T>
-inline auto _iterable_size(const T &t, int, long) -> decltype(std::size(t)) {
-  return std::size(t);
-}
-
-template <typename T>
-inline auto _iterable_size(const T &t, long, long)
+inline auto _iterable_size(const T &t, priority_tag_low, priority_tag_low)
     -> decltype(std::distance(iterable_begin(t), iterable_end(t))) {
   return std::distance(iterable_begin(t), iterable_end(t));
 }
@@ -76,22 +80,23 @@ inline std::size_t _iterable_size(const T &t, ...) {
 
 template <typename T>
 inline std::size_t iterable_size(const T &t) {
-  return _iterable_size(t, 0, 0);
+  return _iterable_size(t, priority_tag_high{}, priority_tag_high{});
 }
 
-template <typename It, typename std::iterator_traits<It>::difference_type>
-inline void _iterator_advance(It &it, std::size_t n, int) {
+template <typename It>
+inline auto _iterator_advance(It &it, std::size_t n, priority_tag_high) 
+    -> decltype(std::advance(it, n), void()) {
   std::advance(it, n);
 }
 
 template <typename It>
-inline void _iterator_advance(It &it, std::size_t n, long) {
+inline void _iterator_advance(It &it, std::size_t n, priority_tag_low) {
   for (; n > 0; --n) ++it;
 }
 
 template <typename It>
 inline void iterator_advance(It &it, std::size_t n) {
-  _iterator_advance(it, n, 0);
+  _iterator_advance(it, n, priority_tag_high{});
 }
 
 }  // namespace _detail

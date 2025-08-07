@@ -13,6 +13,7 @@
 
 #include "../escape_sequence.hpp"
 #include "../export_command/export_command.hpp"
+#include "../iterable.hpp"
 #include "../options.hpp"
 #include "../type_check.hpp"
 #include "../utility.hpp"
@@ -25,12 +26,12 @@ namespace _detail {
 namespace _export_tuple {
 
 template <std::size_t i, typename T>
-inline auto get(const T &tuple, int) -> decltype(tuple.template get<i>()) {
+inline auto get(const T &tuple, priority_tag_high) -> decltype(tuple.template get<i>()) {
   return tuple.template get<i>();
 }
 
 template <std::size_t i, typename T>
-inline auto get(const T &tuple, long) -> decltype(get<i>(tuple)) {
+inline auto get(const T &tuple, priority_tag_low) -> decltype(get<i>(tuple)) {
   return get<i>(tuple);
 }
 
@@ -43,7 +44,7 @@ inline auto _export_tuple_in_one_line(
     const export_command &command
 ) -> std::enable_if_t<is_tuple<T>, std::string> {
   std::string output = export_var(
-      _export_tuple::get<i>(tuple, 0), indent, last_line_length, next_depth, true, command
+      _export_tuple::get<i>(tuple, priority_tag_high{}), indent, last_line_length, next_depth, true, command
   );
   if (has_newline(output)) {
     return "\n";
@@ -64,7 +65,7 @@ inline auto _export_tuple_in_lines(
     const T &tuple, const std::string &indent, std::size_t next_depth, const export_command &command
 ) -> std::enable_if_t<is_tuple<T>, std::string> {
   std::string output = export_var(
-      _export_tuple::get<i>(tuple, 0), indent, get_length(indent), next_depth, false, command
+      _export_tuple::get<i>(tuple, priority_tag_high{}), indent, get_length(indent), next_depth, false, command
   );
 
   if constexpr (i < size - 1) {
