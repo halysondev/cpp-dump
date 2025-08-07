@@ -47,15 +47,18 @@ using remove_cvref = std::remove_cv_t<std::remove_reference_t<T>>;
 // Arithmetic -------------------------------------------------------------------------------------
 template <typename T>
 struct _is_vector_bool_reference {
+  struct priority_tag_low {};
+  struct priority_tag_high : priority_tag_low {};
+
   template <typename RawT, typename... Args>
-  static auto check(int) -> std::enable_if_t<
+  static auto check(priority_tag_high) -> std::enable_if_t<
       std::is_same_v<RawT, typename std::vector<bool, Args...>::const_reference>,
       std::true_type>;
 
   template <typename RawT>
-  static std::false_type check(long);
+  static std::false_type check(priority_tag_low);
 
-  static constexpr bool value = decltype(check<remove_cvref<T>>(0))::value;
+  static constexpr bool value = decltype(check<remove_cvref<T>>(priority_tag_high{}))::value;
 };
 
 template <typename T>
@@ -122,8 +125,11 @@ struct _is_iterable {
   template <typename It>
   static auto is_incrementable(It&& u) -> decltype(++u);
 
+  struct priority_tag_low {};
+  struct priority_tag_high : priority_tag_low {};
+
   template <typename ConstT>
-  static auto check(int) -> decltype(
+  static auto check(priority_tag_high) -> decltype(
     iterable_begin(std::declval<ConstT>()) != iterable_end(std::declval<ConstT>()),
     *iterable_begin(std::declval<ConstT>()),
     is_incrementable(iterable_begin(std::declval<ConstT>())),
@@ -132,9 +138,9 @@ struct _is_iterable {
   );
 
   template <typename ConstT>
-  static std::false_type check(long);
+  static std::false_type check(priority_tag_low);
 
-  static constexpr bool value = decltype(check<const remove_cvref<T>>(0))::value;
+  static constexpr bool value = decltype(check<const remove_cvref<T>>(priority_tag_high{}))::value;
 };
 
 template <typename T>
@@ -148,13 +154,16 @@ using iterable_elem_type =
 // Tuple ------------------------------------------------------------------------------------------
 template <typename T>
 struct _is_tuple {
-  template <typename RawT>
-  static auto check(int) -> decltype(std::tuple_size<RawT>::value, std::true_type());
+  struct priority_tag_low {};
+  struct priority_tag_high : priority_tag_low {};
 
   template <typename RawT>
-  static std::false_type check(long);
+  static auto check(priority_tag_high) -> decltype(std::tuple_size<RawT>::value, std::true_type());
 
-  static constexpr bool value = decltype(check<remove_cvref<T>>(0))::value;
+  template <typename RawT>
+  static std::false_type check(priority_tag_low);
+
+  static constexpr bool value = decltype(check<remove_cvref<T>>(priority_tag_high{}))::value;
 };
 
 template <typename T>
@@ -263,17 +272,20 @@ struct export_command;
 
 template <typename T>
 struct _is_exportable_object_generic {
+  struct priority_tag_low {};
+  struct priority_tag_high : priority_tag_low {};
+
   template <typename RawT>
-  static auto check(int) -> decltype(
+  static auto check(priority_tag_high) -> decltype(
     export_object_generic(std::declval<RawT>(), "", 0, 0, false, std::declval<export_command>()),
     std::true_type()
     //
   );
 
   template <typename RawT>
-  static std::false_type check(long);
+  static std::false_type check(priority_tag_low);
 
-  static constexpr bool value = decltype(check<remove_cvref<T>>(0))::value;
+  static constexpr bool value = decltype(check<remove_cvref<T>>(priority_tag_high{}))::value;
 };
 
 template <typename T>
@@ -282,17 +294,20 @@ inline constexpr bool is_exportable_object_generic = _is_exportable_object_gener
 // Enum2 ------------------------------------------------------------------------------------------
 template <typename T>
 struct _is_exportable_enum_generic {
+  struct priority_tag_low {};
+  struct priority_tag_high : priority_tag_low {};
+
   template <typename RawT>
-  static auto check(int) -> decltype(
+  static auto check(priority_tag_high) -> decltype(
     export_enum_generic(std::declval<RawT>(), "", 0, 0, false, std::declval<export_command>()),
     std::true_type()
     //
   );
 
   template <typename RawT>
-  static std::false_type check(long);
+  static std::false_type check(priority_tag_low);
 
-  static constexpr bool value = decltype(check<remove_cvref<T>>(0))::value;
+  static constexpr bool value = decltype(check<remove_cvref<T>>(priority_tag_high{}))::value;
 };
 
 template <typename T>
@@ -301,15 +316,18 @@ inline constexpr bool is_exportable_enum_generic = _is_exportable_enum_generic<T
 // Ostream ----------------------------------------------------------------------------------------
 template <typename T>
 struct _is_ostream {
+  struct priority_tag_low {};
+  struct priority_tag_high : priority_tag_low {};
+
   template <typename RawT>
-  static auto check(int) -> std::enable_if_t<
+  static auto check(priority_tag_high) -> std::enable_if_t<
       !std::is_function_v<RawT> && !std::is_member_pointer_v<RawT>,
       decltype(std::declval<std::ostream>() << std::declval<const RawT>(), std::true_type())>;
 
   template <typename RawT>
-  static std::false_type check(long);
+  static std::false_type check(priority_tag_low);
 
-  static constexpr bool value = decltype(check<remove_cvref<T>>(0))::value;
+  static constexpr bool value = decltype(check<remove_cvref<T>>(priority_tag_high{}))::value;
 };
 
 template <typename T>
@@ -318,15 +336,18 @@ inline constexpr bool is_ostream = _is_ostream<T>::value;
 // Asterisk ---------------------------------------------------------------------------------------
 template <typename T>
 struct _is_asterisk {
+  struct priority_tag_low {};
+  struct priority_tag_high : priority_tag_low {};
+
   template <typename RawT>
-  static auto check(int) -> std::enable_if_t<
+  static auto check(priority_tag_high) -> std::enable_if_t<
       !std::is_same_v<remove_cvref<decltype(*std::declval<const RawT>())>, RawT>,
       std::true_type>;
 
   template <typename RawT>
-  static std::false_type check(long);
+  static std::false_type check(priority_tag_low);
 
-  static constexpr bool value = decltype(check<remove_cvref<T>>(0))::value;
+  static constexpr bool value = decltype(check<remove_cvref<T>>(priority_tag_high{}))::value;
 };
 
 template <typename T>

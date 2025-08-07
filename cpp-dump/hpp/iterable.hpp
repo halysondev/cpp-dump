@@ -14,8 +14,8 @@ namespace cpp_dump {
 namespace _detail {
 
 // Tag dispatching structures to avoid type conversion issues
-struct priority_tag_high {};
 struct priority_tag_low {};
+struct priority_tag_high : priority_tag_low {};
 
 template <typename T>
 inline auto _iterable_begin(const T &t, priority_tag_high) -> decltype(begin(t)) {
