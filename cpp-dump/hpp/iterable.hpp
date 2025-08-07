@@ -80,7 +80,7 @@ inline std::size_t _iterable_size(const T &t, ...) {
 
 template <typename T>
 inline std::size_t iterable_size(const T &t) {
-  return _iterable_size(t, priority_tag_high{}, priority_tag_high{});
+  return static_cast<std::size_t>(_iterable_size(t, priority_tag_high{}, priority_tag_high{}));
 }
 
 template <typename It>

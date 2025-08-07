@@ -236,9 +236,12 @@ inline auto export_arithmetic(
       std::conditional_t<(sizeof(UnsignedT) > sizeof(unsigned int)), UnsignedT, unsigned int>;
   UnsignedTOrInt abs;
   if constexpr (std::is_signed_v<T>) {
-    abs = static_cast<UnsignedTOrInt>(
-        make_unsigned ? static_cast<UnsignedT>(value) : std::abs(value)
-    );
+    if (make_unsigned) {
+      abs = static_cast<UnsignedTOrInt>(static_cast<UnsignedT>(value));
+    } else {
+      // Use explicit conversion to avoid long->size_t conversion issues in MSVC C++23
+      abs = static_cast<UnsignedTOrInt>(value < 0 ? static_cast<UnsignedT>(-value) : static_cast<UnsignedT>(value));
+    }
   } else {
     abs = value;
   }
