@@ -27,7 +27,7 @@ const std::function<std::size_t(std::size_t, const std::function<std::size_t()> 
     _default_skip_size_func(
         [](std::size_t index, const std::function<std::size_t()> &) -> std::size_t {
           if (index >= options::max_iteration_count) {
-            return static_cast<std::size_t>(-1);
+            return std::numeric_limits<std::size_t>::max();
           }
           return 0;
         }
@@ -54,7 +54,7 @@ struct export_command {
     std::optional<int_style_t> int_style;
     bool_style_t bool_style{bool_style_t::normal};
     const char *format{nullptr};
-    std::size_t addr_depth{static_cast<std::size_t>(-1)};
+    std::size_t addr_depth{std::numeric_limits<std::size_t>::max()};
     bool escape_str{false};
     bool char_as_hex{false};
     bool show_index{false};
@@ -233,7 +233,7 @@ struct export_command {
   }
 
   std::size_t addr_depth() const {
-    return _global_props ? _global_props->addr_depth : static_cast<std::size_t>(-1);
+    return _global_props ? _global_props->addr_depth : std::numeric_limits<std::size_t>::max();
   }
 
   bool escape_str() const { return _global_props && _global_props->escape_str; }

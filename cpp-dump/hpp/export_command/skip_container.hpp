@@ -8,6 +8,7 @@
 #pragma once
 
 #include <functional>
+#include <limits>
 #include <optional>
 #include <tuple>
 #include <utility>
@@ -59,7 +60,7 @@ struct skip_iterator {
   }
   skip_iterator &operator++() noexcept {
     std::size_t skip_size = calc_skip_size();
-    if (skip_size == static_cast<std::size_t>(-1)) {
+    if (skip_size == std::numeric_limits<std::size_t>::max()) {
       _done = true;
     } else if (skip_size == 0) {
       ++it;
