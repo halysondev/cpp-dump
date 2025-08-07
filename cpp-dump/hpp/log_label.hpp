@@ -169,8 +169,10 @@ inline types::log_label_func_t fixed_length(
           output.append(space_len, ' ');
         }
 
-        if (max_width > 2 && output.length() > static_cast<std::size_t>(max_width - 2)) {
-          output = "[.. " + output.substr(output.length() - std::max(max_width - 6, 0));
+        auto max_len = max_width - 2;
+        if (max_width > 2 && output.length() > static_cast<std::size_t>(max_len >= 0 ? max_len : 0)) {
+          auto substr_len = std::max(max_width - 6, 0);
+          output = "[.. " + output.substr(output.length() - static_cast<std::size_t>(substr_len >= 0 ? substr_len : 0));
         }
 
         output += "] ";

@@ -229,7 +229,7 @@ struct export_command {
     }
     std::vector<char> buffer(length + 1);
     std::snprintf(buffer.data(), buffer.size(), _global_props->format, value);
-    return {buffer.data(), static_cast<std::size_t>(length)};
+    return {buffer.data(), static_cast<std::size_t>(length >= 0 ? length : 0)};
   }
 
   std::size_t addr_depth() const {
@@ -618,7 +618,7 @@ inline auto front(std::size_t iteration_count = options::max_iteration_count) {
   return _detail::export_command(
       [=](std::size_t index, const std::function<std::size_t()> &) -> std::size_t {
         if (index >= iteration_count) {
-          return static_cast<std::size_t>(-1);  // skip to the end
+          return std::numeric_limits<std::size_t>::max();  // skip to the end
         }
         return 0;  // increment normally
       }
@@ -677,7 +677,7 @@ inline auto middle(std::size_t iteration_count = options::max_iteration_count) {
           return first - index;  // skip to the first
         }
         if (index >= last) {
-          return static_cast<std::size_t>(-1);  // skip to the end
+          return std::numeric_limits<std::size_t>::max();  // skip to the end
         }
         return 0;  // increment normally
       }
