@@ -24,7 +24,7 @@
 
 #define _p_CPP_DUMP_STRINGIFY(x) #x
 #define _p_CPP_DUMP_CONTAINS_VARIADIC_TEMPLATE(...)                                                \
-  cpp_dump::_detail::contains_variadic_template<static_cast<std::size_t>(_p_CPP_DUMP_VA_SIZE(__VA_ARGS__))>( \
+  cpp_dump::_detail::contains_variadic_template<cpp_dump::_detail::to_size_t(_p_CPP_DUMP_VA_SIZE(__VA_ARGS__))>( \
       {_p_CPP_DUMP_EXPAND_VA(_p_CPP_DUMP_STRINGIFY, __VA_ARGS__)}                                  \
   )
 
@@ -36,7 +36,7 @@
  */
 #define cpp_dump(...)                                                                              \
   cpp_dump::_detail::cpp_dump_macro<                                                               \
-      static_cast<std::size_t>(_p_CPP_DUMP_VA_SIZE(__VA_ARGS__)),                                  \
+      cpp_dump::_detail::to_size_t(_p_CPP_DUMP_VA_SIZE(__VA_ARGS__)),                             \
       _p_CPP_DUMP_CONTAINS_VARIADIC_TEMPLATE(__VA_ARGS__)>(                                        \
       {__FILE__, __LINE__, __func__},                                                              \
       {_p_CPP_DUMP_EXPAND_VA(_p_CPP_DUMP_STRINGIFY, __VA_ARGS__)},                                 \
@@ -63,6 +63,11 @@ void write_log(std::string_view output) {
 }
 
 namespace _detail {
+
+// Helper function to safely convert int to std::size_t for C++23 compatibility
+constexpr std::size_t to_size_t(int value) noexcept {
+  return static_cast<std::size_t>(value);
+}
 
 template <typename T>
 bool _dump_one(
