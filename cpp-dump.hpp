@@ -14,6 +14,7 @@
 #include <iostream>
 #include <string>
 #include <string_view>
+#include <type_traits>
 
 #include "./cpp-dump/hpp/escape_sequence.hpp"
 #include "./cpp-dump/hpp/expand_va_macro.hpp"
@@ -64,9 +65,15 @@ void write_log(std::string_view output) {
 
 namespace _detail {
 
-// Helper function to safely convert int to std::size_t for C++23 compatibility
-constexpr std::size_t to_size_t(int value) noexcept {
-  return static_cast<std::size_t>(value);
+// Helper function to safely convert any integral type to std::size_t for C++23 compatibility
+template<typename T>
+constexpr std::size_t to_size_t(T value) noexcept {
+  static_assert(std::is_integral_v<T>, "to_size_t requires integral type");
+  if constexpr (std::is_signed_v<T>) {
+    return static_cast<std::size_t>(value >= 0 ? value : 0);
+  } else {
+    return static_cast<std::size_t>(value);
+  }
 }
 
 template <typename T>
